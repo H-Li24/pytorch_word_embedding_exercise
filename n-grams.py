@@ -29,7 +29,7 @@ And see thy blood warm when thou feel'st it cold.""".split()
 trigrams = [([test_sentence[i], test_sentence[i + 1]], test_sentence[i + 2])
             for i in range(len(test_sentence) - 2)]
 # print the first 3, just so you can see what they look like
-print(trigrams[:3])
+# print(trigrams[:3])
 
 vocab = set(test_sentence)
 word_to_ix = {word: i for i, word in enumerate(vocab)}
@@ -88,7 +88,7 @@ for epoch in range(100):
         # Get the Python number from a 1-element Tensor by calling tensor.item()
         total_loss += loss.item()
     losses.append(total_loss)
-print(losses)  # The loss decreased every iteration over the training data!
+# print(losses)  # The loss decreased every iteration over the training data!
 
 # To get the embedding of a particular word, e.g. "beauty"
 print(model.embeddings.weight[word_to_ix["beauty"]])

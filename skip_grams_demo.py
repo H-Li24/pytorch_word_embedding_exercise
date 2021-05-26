@@ -25,7 +25,7 @@ for i in range(2, len(raw_text) - 2):
     target = [raw_text[i - 2], raw_text[i - 1],
                raw_text[i + 1], raw_text[i + 2]]
     data.append((context, target))
-print(data[:5])
+# print(data[:5])
 
 
 class SkipgramModeler(nn.Module):
@@ -34,7 +34,7 @@ class SkipgramModeler(nn.Module):
         self.context_size = context_size
         self.embeddings = nn.Embedding(vocab_size, embedding_dim)
         self.linear1 = nn.Linear(embedding_dim, 128)
-        self.linear2 = nn.Linear(128, context_size*vocab_size)
+        self.linear2 = nn.Linear(128, context_size * vocab_size)
     
     def forward(self,x):
         embeds = self.embeddings(x).view(1,-1)
@@ -48,7 +48,7 @@ def make_context_vector(context, word_to_ix):
     idxs = [word_to_ix[context]]
     return torch.tensor(idxs, dtype=torch.long)
 
-def make_context_vector_2(context, word_to_ix):
+def make_target_vectors(context, word_to_ix):
     idxs = [word_to_ix[w] for w in context]
     return torch.tensor(idxs, dtype=torch.long)
 
@@ -60,26 +60,18 @@ optimizer = optim.SGD(model.parameters(), lr=0.001)
 for epoch in range(100):
     total_loss = 0
     for context, target in data:
-        # 步骤 1. 准备好进入模型的数据 (例如将单词转换成整数索引,并将其封装在变量中)
         context_id = make_context_vector(context, word_to_ix)
 
-        # 步骤 2. 回调 *积累* 梯度. 在进入一个实例前,需要将之前的实力梯度置零
         model.zero_grad()
 
-        # 步骤 3. 运行反向传播,得到单词的概率分布
         log_probs = model(context_id)
 
-        # print(log_probs[0].unsqueeze(0))
-        # print(torch.tensor([word_to_ix[target[0]]]))
-
-        # 步骤 4. 计算损失函数. (再次注意, Torch需要将目标单词封装在变量中)
         loss_0 = loss_function(log_probs[0].unsqueeze(0), torch.tensor([word_to_ix[target[0]]], dtype=torch.long))
         loss_1 = loss_function(log_probs[1].unsqueeze(0), torch.tensor([word_to_ix[target[1]]], dtype=torch.long))
-        loss_2 = loss_function(log_probs[0].unsqueeze(0), torch.tensor([word_to_ix[target[2]]], dtype=torch.long))
-        loss_3 = loss_function(log_probs[0].unsqueeze(0), torch.tensor([word_to_ix[target[3]]], dtype=torch.long))
+        loss_2 = loss_function(log_probs[2].unsqueeze(0), torch.tensor([word_to_ix[target[2]]], dtype=torch.long))
+        loss_3 = loss_function(log_probs[3].unsqueeze(0), torch.tensor([word_to_ix[target[3]]], dtype=torch.long))
         loss = loss_0 + loss_1 + loss_2 + loss_3
 
-        # 步骤 5. 反向传播并更新梯度
         loss.backward()
         optimizer.step()
 
@@ -87,27 +79,20 @@ for epoch in range(100):
 
     losses.append(total_loss)
 
-
-# print(losses)  # 在训练集中每次迭代损失都会减小!
-# 创建模型并且训练. 这里有一些函数可以在使用模型之前帮助你准备数据
-
 correct = 0
 for context, target in data:
-    print(context)
-    print(target)
     context_idxs = torch.tensor(make_context_vector(context, word_to_ix), dtype=torch.long)
     log_probs = model(context_idxs)
     _, ix = torch.max(log_probs, 1)
-    target = make_context_vector_2(target, word_to_ix)
-    target_1 = list(target)
+    target_ix = make_target_vectors(target, word_to_ix)
+
+    target_ix_1 = list(target_ix)
     ix_1 = list(ix)
-    print(ix_1)
-    print(target_1)
-    retA = [i for i in ix_1 if i in target_1]
-    print(retA)
+    retA = [i for i in ix_1 if i in target_ix_1]
     if len(retA) != 0:
         correct += 1
-    # correct += (list(target) == list(ix))
+    
+    # correct += (target_1 == ix_1)
 
 accuracy = correct / (len(data))
 print("Average accuracy:", accuracy)
